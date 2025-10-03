@@ -158,11 +158,18 @@
   font-weight: 500;
 }
 
-h2 {
-  margin: 0 0 15px 0;
-  color: #333;
+.assignments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
   border-bottom: 2px solid #007bff;
   padding-bottom: 8px;
+}
+
+.assignments-header h2 {
+  margin: 0;
+  color: #333;
 }
 
 .assignments-list {

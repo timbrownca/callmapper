@@ -237,11 +237,6 @@ function App() {
                   </div>
                 )}
               </div>
-              {Object.keys(assignments).length > 0 && (
-                <button onClick={copyToClipboard} className="copy-btn">
-                  Copy to Clipboard
-                </button>
-              )}
             </div>
 
             {error && (
@@ -254,8 +249,15 @@ function App() {
 
             {Object.keys(assignments).length > 0 && (
               <>
-                <h2>Call Assignments</h2>
-                <div className="assignments-list">
+            <div className="assignments-header">
+              <h2>Call Assignments</h2>
+              {Object.keys(assignments).length > 0 && (
+                <button onClick={copyToClipboard} className="copy-btn">
+                  Copy to Clipboard
+                </button>
+              )}
+            </div>
+            <div className="assignments-list">
                   {Object.keys(assignments)
                     .sort((a, b) => a.localeCompare(b))
                     .map(person => (
