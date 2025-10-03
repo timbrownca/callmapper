@@ -15,7 +15,15 @@ interface AssignmentResult {
 function calculateMaxAchievableCalls(n: number): number {
   // For n people, the maximum calls per person without reciprocals is floor(n/2)
   // This ensures we can create a pattern where A calls B, C calls D, etc.
-  return Math.floor(n / 2);
+  // However, for higher numbers, we need to be more restrictive
+  if (n <= 2) return 1;
+  if (n <= 4) return 1;
+  if (n <= 6) return 2;
+  if (n <= 8) return 2;
+  if (n <= 10) return 3;
+  if (n <= 12) return 3;
+  // For larger groups, be more conservative
+  return Math.floor(n / 4);
 }
 
 function assignCalls(people: string[], requestedCallsPerPerson: number): AssignmentResult {
@@ -46,6 +54,18 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
       assignments: {},
       maxCallsPerPerson: 0,
       error: `Cannot assign ${requestedCallsPerPerson} calls per person without reciprocals. With ${n} people, the maximum achievable is ${maxAchievable} calls per person. Try reducing the number of calls per person.`
+    };
+  }
+
+  // Additional mathematical check: total possible calls vs required calls
+  const totalRequiredCalls = n * requestedCallsPerPerson;
+  const maxNonReciprocalCalls = Math.floor(n * (n - 1) / 2); // Maximum without reciprocals
+  
+  if (totalRequiredCalls > maxNonReciprocalCalls) {
+    return {
+      assignments: {},
+      maxCallsPerPerson: 0,
+      error: `Mathematically impossible: ${n} people with ${requestedCallsPerPerson} calls each would require ${totalRequiredCalls} total calls, but only ${maxNonReciprocalCalls} non-reciprocal calls are possible. Try reducing the number of calls per person.`
     };
   }
   
@@ -94,11 +114,12 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
       assignments[person].length === maxCallsPerPerson
     );
     
-    // Check for any reciprocals
+    // Check for any reciprocals - more thorough check
     const hasReciprocals = shuffledPeople.some(person => 
-      assignments[person].some(target => 
-        assignments[target]?.includes(person)
-      )
+      assignments[person].some(target => {
+        // Check if target also calls this person
+        return assignments[target] && assignments[target].includes(person);
+      })
     );
     
     if (success && allValid && !hasReciprocals) {
