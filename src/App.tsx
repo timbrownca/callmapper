@@ -71,7 +71,7 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
   }
   
   // Try multiple attempts to find a valid assignment
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < 50; attempt++) {
     const assignments: Assignments = {};
     const shuffledPeople = [...people].sort(() => Math.random() - 0.5);
     
@@ -80,54 +80,84 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
       assignments[person] = [];
     });
     
-    // Try to assign calls ensuring no reciprocals and exact call counts
-    let success = true;
+    // Note: We don't actually use allPairs in this implementation
+    // but keeping the structure for potential future use
     
+    // Try to assign calls using a more systematic approach
+    let success = true;
+    const callCounts: { [person: string]: number } = {};
+    shuffledPeople.forEach(person => {
+      callCounts[person] = 0;
+    });
+    
+    // Assign calls ensuring each person makes exactly maxCallsPerPerson calls
     for (const person of shuffledPeople) {
       const callsToMake = maxCallsPerPerson;
-      const assignedCalls = assignments[person].length;
-      const remainingCalls = callsToMake - assignedCalls;
+      const currentCalls = assignments[person].length;
+      const remainingCalls = callsToMake - currentCalls;
       
       if (remainingCalls > 0) {
-        // Find available targets (not self, not already assigned, not reciprocal)
-        const availableTargets = shuffledPeople.filter(target => 
-          target !== person && 
-          !assignments[person].includes(target) &&
-          !assignments[target]?.includes(person)
-        );
+        // Find available targets that won't create reciprocals
+        const availableTargets = shuffledPeople.filter(target => {
+          if (target === person) return false;
+          if (assignments[person].includes(target)) return false;
+          if (assignments[target]?.includes(person)) return false;
+          return true;
+        });
         
         if (availableTargets.length < remainingCalls) {
-          // Not enough available targets, this attempt failed
           success = false;
           break;
         }
         
-        // Assign the remaining calls
-        for (let i = 0; i < remainingCalls; i++) {
-          const target = availableTargets[i];
+        // Select targets randomly from available ones
+        const shuffledTargets = [...availableTargets].sort(() => Math.random() - 0.5);
+        const selectedTargets = shuffledTargets.slice(0, remainingCalls);
+        
+        for (const target of selectedTargets) {
           assignments[person].push(target);
         }
       }
     }
     
-    // Verify all people have the correct number of calls
-    const allValid = shuffledPeople.every(person => 
-      assignments[person].length === maxCallsPerPerson
-    );
-    
-    // Check for any reciprocals - more thorough check
-    const hasReciprocals = shuffledPeople.some(person => 
-      assignments[person].some(target => {
-        // Check if target also calls this person
-        return assignments[target] && assignments[target].includes(person);
-      })
-    );
-    
-    if (success && allValid && !hasReciprocals) {
-      return {
-        assignments,
-        maxCallsPerPerson
-      };
+    // Verify the assignment is valid
+    if (success) {
+      // Check all people have correct number of calls
+      const allValid = shuffledPeople.every(person => 
+        assignments[person].length === maxCallsPerPerson
+      );
+      
+      // Check for reciprocals
+      const hasReciprocals = shuffledPeople.some(person => 
+        assignments[person].some(target => 
+          assignments[target]?.includes(person)
+        )
+      );
+      
+      // Check that no person is called by too many people
+      const callCounts: { [person: string]: number } = {};
+      shuffledPeople.forEach(person => {
+        callCounts[person] = 0;
+      });
+      
+      shuffledPeople.forEach(person => {
+        assignments[person].forEach(target => {
+          callCounts[target]++;
+        });
+      });
+      
+      const maxCallsReceived = Math.max(...Object.values(callCounts));
+      const minCallsReceived = Math.min(...Object.values(callCounts));
+      
+      // Ensure reasonable distribution (no one gets called by too many people)
+      const isBalanced = maxCallsReceived - minCallsReceived <= 2;
+      
+      if (allValid && !hasReciprocals && isBalanced) {
+        return {
+          assignments,
+          maxCallsPerPerson
+        };
+      }
     }
   }
   
