@@ -216,7 +216,7 @@ function App() {
           </div>
         </div>
 
-        {nameList.length > 0 && (
+        {(error || Object.keys(assignments).length > 0) && (
           <div className="results-section">
             {error && (
               <div className="error-section">
