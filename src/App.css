@@ -125,25 +125,6 @@
   padding: 20px;
 }
 
-.info-section {
-  background: #e3f2fd;
-  border: 1px solid #bbdefb;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.info-stats {
-  flex: 1;
-}
-
-.info-item {
-  margin: 5px 0;
-  color: #1565c0;
-}
 
 .error-section {
   margin-bottom: 20px;

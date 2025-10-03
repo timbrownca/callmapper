@@ -139,7 +139,6 @@ function App() {
   const [callsPerPerson, setCallsPerPerson] = useState<number>(2);
   const [assignments, setAssignments] = useState<Assignments>({});
   const [textList, setTextList] = useState<string>('');
-  const [maxCallsPerPerson, setMaxCallsPerPerson] = useState<number>(0);
   const [error, setError] = useState<string>('');
 
   // Calculate the maximum achievable calls based on current names
@@ -165,7 +164,6 @@ function App() {
     
     const result = assignCalls(nameList, callsPerPerson);
     setAssignments(result.assignments);
-    setMaxCallsPerPerson(result.maxCallsPerPerson);
     setError(result.error || '');
     setTextList(generateTextList(result.assignments));
   };
@@ -220,25 +218,6 @@ function App() {
 
         {nameList.length > 0 && (
           <div className="results-section">
-            <div className="info-section">
-              <div className="info-stats">
-                <div className="info-item">
-                  <strong>Total people:</strong> {nameList.length}
-                </div>
-                <div className="info-item">
-                  <strong>Max achievable without reciprocals:</strong> {maxAchievable}
-                </div>
-                <div className="info-item">
-                  <strong>Current setting:</strong> {callsPerPerson} calls per person
-                </div>
-                {Object.keys(assignments).length > 0 && (
-                  <div className="info-item">
-                    <strong>Maximum calls per person:</strong> {maxCallsPerPerson}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {error && (
               <div className="error-section">
                 <div className="error-message">
@@ -249,15 +228,13 @@ function App() {
 
             {Object.keys(assignments).length > 0 && (
               <>
-            <div className="assignments-header">
-              <h2>Call Assignments</h2>
-              {Object.keys(assignments).length > 0 && (
-                <button onClick={copyToClipboard} className="copy-btn">
-                  Copy to Clipboard
-                </button>
-              )}
-            </div>
-            <div className="assignments-list">
+                <div className="assignments-header">
+                  <h2>Call Assignments</h2>
+                  <button onClick={copyToClipboard} className="copy-btn">
+                    Copy to Clipboard
+                  </button>
+                </div>
+                <div className="assignments-list">
                   {Object.keys(assignments)
                     .sort((a, b) => a.localeCompare(b))
                     .map(person => (
