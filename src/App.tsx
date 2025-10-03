@@ -215,6 +215,7 @@ function App() {
   const [textList, setTextList] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState<boolean>(false);
+  const [showInfoDialog, setShowInfoDialog] = useState<boolean>(false);
 
   // Calculate the maximum achievable calls based on current names
   const nameList = names.split(',').map(name => name.trim()).filter(name => name.length > 0);
@@ -273,8 +274,19 @@ function App() {
         </div>
       )}
       <header className="App-header">
-        <h1>Call Mapper</h1>
-        <p>Generate call assignments for a group of people</p>
+        <div className="header-content">
+          <div>
+            <h1>Call Mapper</h1>
+            <p>Generate call assignments for a group of people</p>
+          </div>
+          <button 
+            className="info-btn"
+            onClick={() => setShowInfoDialog(true)}
+            title="How the algorithm works"
+          >
+            ℹ️
+          </button>
+        </div>
       </header>
       
       <main className="App-main">
@@ -332,7 +344,7 @@ function App() {
                 <div className="assignments-header">
                   <div>
                     <h2>Call Assignments</h2>
-                    <p className="randomization-note">✨ Randomized each time</p>
+                    <p className="randomization-note">✨ Randomized each time you click Generate</p>
                   </div>
                   <button onClick={copyToClipboard} className="copy-btn">
                     Copy to Clipboard
@@ -352,6 +364,60 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Info Dialog */}
+      {showInfoDialog && (
+        <div 
+          className="dialog-overlay" 
+          onClick={() => setShowInfoDialog(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dialog-title"
+        >
+          <div 
+            className="dialog" 
+            onClick={(e) => e.stopPropagation()}
+            role="document"
+          >
+            <div className="dialog-header">
+              <h2 id="dialog-title">How the Algorithm Works</h2>
+              <button 
+                className="dialog-close"
+                onClick={() => setShowInfoDialog(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="dialog-content">
+              <h3>🎯 Goal</h3>
+              <p>Create call assignments where each person calls exactly the specified number of people, with no reciprocal calls (if A calls B, B won't call A).</p>
+              
+              <h3>🔧 Algorithm Steps</h3>
+              <ol>
+                <li><strong>Validation:</strong> Check if the configuration is mathematically possible</li>
+                <li><strong>Randomization:</strong> Use a seeded random generator for different results each time</li>
+                <li><strong>Assignment:</strong> Systematically assign calls while avoiding reciprocals</li>
+                <li><strong>Balance Check:</strong> Ensure no one gets called by too many people</li>
+                <li><strong>Verification:</strong> Validate all constraints are met</li>
+              </ol>
+              
+              <h3>🚫 Constraints</h3>
+              <ul>
+                <li><strong>No Reciprocals:</strong> If Bill calls Bob, Bob cannot call Bill</li>
+                <li><strong>Balanced Distribution:</strong> No one gets called by significantly more people than others</li>
+                <li><strong>Exact Counts:</strong> Each person makes exactly the specified number of calls</li>
+                <li><strong>Mathematical Limits:</strong> Prevents impossible configurations</li>
+              </ul>
+              
+              <h3>🎲 Randomization</h3>
+              <p>Each time you click "Generate", a new random seed is created, ensuring different assignments every time while maintaining all constraints.</p>
+              
+              <h3>⚠️ Error Handling</h3>
+              <p>If a configuration is impossible (like 5 calls per person with 11 people), the system will show an error message and suggest reducing the number of calls per person.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
