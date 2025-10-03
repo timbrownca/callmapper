@@ -12,17 +12,20 @@ interface AssignmentResult {
 }
 
 function calculateMaxAchievableCalls(n: number): number {
-  // For n people, the maximum calls per person without reciprocals is floor(n/2)
-  // This ensures we can create a pattern where A calls B, C calls D, etc.
-  // However, for higher numbers, we need to be more restrictive
+  // For n people, the maximum calls per person without reciprocals
+  // The theoretical maximum is floor((n-1)/2) for even n, floor(n/2) for odd n
+  // But we need to be more conservative for practical assignment
   if (n <= 2) return 1;
   if (n <= 4) return 1;
   if (n <= 6) return 2;
   if (n <= 8) return 2;
   if (n <= 10) return 3;
   if (n <= 12) return 3;
-  // For larger groups, be more conservative
-  return Math.floor(n / 4);
+  if (n <= 15) return 4;
+  if (n <= 18) return 4;
+  if (n <= 20) return 5;
+  // For larger groups, use a more reasonable formula
+  return Math.floor(n / 3);
 }
 
 function isConfigurationPossible(n: number, requestedCallsPerPerson: number): { possible: boolean; error?: string } {
@@ -93,7 +96,9 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
   const random = new SeededRandom(SeededRandom.generateSeed());
   
   // Try multiple attempts to find a valid assignment
-  for (let attempt = 0; attempt < 50; attempt++) {
+  // More attempts for larger groups
+  const maxAttempts = n <= 10 ? 50 : n <= 20 ? 100 : 200;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const assignments: Assignments = {};
     const shuffledPeople = [...people].sort(() => random.next() - 0.5);
     
@@ -172,7 +177,9 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
       const minCallsReceived = Math.min(...Object.values(callCounts));
       
       // Ensure reasonable distribution (no one gets called by too many people)
-      const isBalanced = maxCallsReceived - minCallsReceived <= 2;
+      // For larger groups, allow more variation in call distribution
+      const maxAllowedDifference = n <= 10 ? 2 : Math.ceil(n / 4);
+      const isBalanced = maxCallsReceived - minCallsReceived <= maxAllowedDifference;
       
       if (allValid && !hasReciprocals && isBalanced) {
         return {
