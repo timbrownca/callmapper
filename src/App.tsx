@@ -140,6 +140,7 @@ function App() {
   const [assignments, setAssignments] = useState<Assignments>({});
   const [textList, setTextList] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [showToast, setShowToast] = useState<boolean>(false);
 
   // Calculate the maximum achievable calls based on current names
   const nameList = names.split(',').map(name => name.trim()).filter(name => name.length > 0);
@@ -170,11 +171,20 @@ function App() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(textList);
-    alert('Text list copied to clipboard!');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (
     <div className="App">
+      {showToast && (
+        <div className="toast">
+          <div className="toast-content">
+            <span className="toast-icon">✓</span>
+            <span className="toast-message">Text copied to clipboard!</span>
+          </div>
+        </div>
+      )}
       <header className="App-header">
         <h1>Call Mapper</h1>
         <p>Generate call assignments for a group of people</p>
