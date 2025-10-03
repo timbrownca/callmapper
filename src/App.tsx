@@ -11,7 +11,6 @@ interface AssignmentResult {
   error?: string;
 }
 
-
 function calculateMaxAchievableCalls(n: number): number {
   // For n people, the maximum calls per person without reciprocals is floor(n/2)
   // This ensures we can create a pattern where A calls B, C calls D, etc.
@@ -26,9 +25,32 @@ function calculateMaxAchievableCalls(n: number): number {
   return Math.floor(n / 4);
 }
 
+function isConfigurationPossible(n: number, requestedCallsPerPerson: number): { possible: boolean; error?: string } {
+  const maxAchievable = calculateMaxAchievableCalls(n);
+  
+  if (requestedCallsPerPerson > maxAchievable) {
+    return {
+      possible: false,
+      error: `Cannot assign ${requestedCallsPerPerson} calls per person without reciprocals. With ${n} people, the maximum achievable is ${maxAchievable} calls per person. Try reducing the number of calls per person.`
+    };
+  }
+
+  // Additional mathematical check: total possible calls vs required calls
+  const totalRequiredCalls = n * requestedCallsPerPerson;
+  const maxNonReciprocalCalls = Math.floor(n * (n - 1) / 2); // Maximum without reciprocals
+  
+  if (totalRequiredCalls > maxNonReciprocalCalls) {
+    return {
+      possible: false,
+      error: `Mathematically impossible: ${n} people with ${requestedCallsPerPerson} calls each would require ${totalRequiredCalls} total calls, but only ${maxNonReciprocalCalls} non-reciprocal calls are possible. Try reducing the number of calls per person.`
+    };
+  }
+
+  return { possible: true };
+}
+
 function assignCalls(people: string[], requestedCallsPerPerson: number): AssignmentResult {
   const n = people.length;
-  const maxAchievable = calculateMaxAchievableCalls(n);
   const maxCallsPerPerson = Math.min(requestedCallsPerPerson, n - 1);
   
   if (n < 2) {
@@ -45,27 +67,6 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
       assignments: { [person1]: [person2] },
       maxCallsPerPerson: 1,
       error: "With only 2 people, only one person can make calls"
-    };
-  }
-  
-  // Check if the requested number is achievable without reciprocals
-  if (requestedCallsPerPerson > maxAchievable) {
-    return {
-      assignments: {},
-      maxCallsPerPerson: 0,
-      error: `Cannot assign ${requestedCallsPerPerson} calls per person without reciprocals. With ${n} people, the maximum achievable is ${maxAchievable} calls per person. Try reducing the number of calls per person.`
-    };
-  }
-
-  // Additional mathematical check: total possible calls vs required calls
-  const totalRequiredCalls = n * requestedCallsPerPerson;
-  const maxNonReciprocalCalls = Math.floor(n * (n - 1) / 2); // Maximum without reciprocals
-  
-  if (totalRequiredCalls > maxNonReciprocalCalls) {
-    return {
-      assignments: {},
-      maxCallsPerPerson: 0,
-      error: `Mathematically impossible: ${n} people with ${requestedCallsPerPerson} calls each would require ${totalRequiredCalls} total calls, but only ${maxNonReciprocalCalls} non-reciprocal calls are possible. Try reducing the number of calls per person.`
     };
   }
   
@@ -165,7 +166,7 @@ function App() {
 
   // Calculate the maximum achievable calls based on current names
   const nameList = names.split(',').map(name => name.trim()).filter(name => name.length > 0);
-  const maxAchievable = nameList.length >= 2 ? Math.floor(nameList.length / 2) : 1;
+  const maxAchievable = nameList.length >= 2 ? calculateMaxAchievableCalls(nameList.length) : 1;
 
   // Automatically adjust callsPerPerson if it exceeds the maximum achievable
   useEffect(() => {
@@ -173,6 +174,10 @@ function App() {
       setCallsPerPerson(maxAchievable);
     }
   }, [maxAchievable, callsPerPerson]);
+
+  // Check for impossible configurations in real-time
+  const validation = nameList.length >= 2 ? isConfigurationPossible(nameList.length, callsPerPerson) : { possible: true };
+  const hasImpossibleConfig = nameList.length >= 2 && !validation.possible;
 
   // Clear assignments when names change
   useEffect(() => {
@@ -183,6 +188,15 @@ function App() {
 
   const handleGenerate = () => {
     const nameList = names.split(',').map(name => name.trim()).filter(name => name.length > 0);
+    
+    // Check if configuration is possible before attempting assignment
+    const validation = isConfigurationPossible(nameList.length, callsPerPerson);
+    if (!validation.possible) {
+      setAssignments({});
+      setError(validation.error || '');
+      setTextList('');
+      return;
+    }
     
     const result = assignCalls(nameList, callsPerPerson);
     setAssignments(result.assignments);
@@ -241,18 +255,22 @@ function App() {
               placeholder="Bill, Bob, Chris, DaveG, DaveH, Ed, Kevin, Kyle, Matt, Pete, Tim"
               rows={3}
             />
-            <button onClick={handleGenerate} className="generate-btn">
+            <button 
+              onClick={handleGenerate} 
+              className="generate-btn"
+              disabled={hasImpossibleConfig}
+            >
               Generate
             </button>
           </div>
         </div>
 
-        {(error || Object.keys(assignments).length > 0) && (
+        {(error || Object.keys(assignments).length > 0 || hasImpossibleConfig) && (
           <div className="results-section">
-            {error && (
+            {(error || hasImpossibleConfig) && (
               <div className="error-section">
                 <div className="error-message">
-                  {error}
+                  {hasImpossibleConfig ? validation.error : error}
                 </div>
               </div>
             )}

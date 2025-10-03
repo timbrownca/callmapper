@@ -159,6 +159,16 @@
   background: #0056b3;
 }
 
+.generate-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.generate-btn:disabled:hover {
+  background: #6c757d;
+}
+
 .results-section {
   background: white;
   border: 1px solid #ddd;
