@@ -49,6 +49,25 @@ function isConfigurationPossible(n: number, requestedCallsPerPerson: number): { 
   return { possible: true };
 }
 
+// Simple seeded random number generator
+class SeededRandom {
+  private seed: number;
+  
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+  
+  next(): number {
+    this.seed = (this.seed * 9301 + 49297) % 233280;
+    return this.seed / 233280;
+  }
+  
+  // Generate a new seed based on current time and random factors
+  static generateSeed(): number {
+    return Date.now() + Math.floor(Math.random() * 1000000);
+  }
+}
+
 function assignCalls(people: string[], requestedCallsPerPerson: number): AssignmentResult {
   const n = people.length;
   const maxCallsPerPerson = Math.min(requestedCallsPerPerson, n - 1);
@@ -70,10 +89,13 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
     };
   }
   
+  // Generate a new random seed for this assignment
+  const random = new SeededRandom(SeededRandom.generateSeed());
+  
   // Try multiple attempts to find a valid assignment
   for (let attempt = 0; attempt < 50; attempt++) {
     const assignments: Assignments = {};
-    const shuffledPeople = [...people].sort(() => Math.random() - 0.5);
+    const shuffledPeople = [...people].sort(() => random.next() - 0.5);
     
     // Initialize assignments
     shuffledPeople.forEach(person => {
@@ -111,7 +133,7 @@ function assignCalls(people: string[], requestedCallsPerPerson: number): Assignm
         }
         
         // Select targets randomly from available ones
-        const shuffledTargets = [...availableTargets].sort(() => Math.random() - 0.5);
+        const shuffledTargets = [...availableTargets].sort(() => random.next() - 0.5);
         const selectedTargets = shuffledTargets.slice(0, remainingCalls);
         
         for (const target of selectedTargets) {
@@ -308,7 +330,10 @@ function App() {
             {Object.keys(assignments).length > 0 && (
               <>
                 <div className="assignments-header">
-                  <h2>Call Assignments</h2>
+                  <div>
+                    <h2>Call Assignments</h2>
+                    <p className="randomization-note">✨ Randomized each time</p>
+                  </div>
                   <button onClick={copyToClipboard} className="copy-btn">
                     Copy to Clipboard
                   </button>
